@@ -2,21 +2,15 @@ cmake_minimum_required (VERSION 2.6)
 project (mrz)
 MESSAGE( STATUS "PROJECT_NAME: " ${PROJECT_NAME} )
 
+option(ENABLE_OPENCV "Build with OpenCV" OFF)
+MESSAGE(STATUS "Build with OpenCV: ${ENABLE_OPENCV}")
+
 # Check platforms
 if (CMAKE_HOST_WIN32)
     set(WINDOWS 1)
 elseif(CMAKE_HOST_UNIX)
     set(LINUX 1)
 endif()
-
-# Set RPATH
-# if(WINDOWS)
-# else()
-#     SET(CMAKE_CXX_FLAGS "-std=c++11 -O3")
-#     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-#     MESSAGE( STATUS "CMAKE_INSTALL_RPATH: " "${CMAKE_INSTALL_PREFIX}/lib" )
-#     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-# endif()
 
 # Add search path for include and lib files
 MESSAGE( STATUS "CPU architecture ${CMAKE_SYSTEM_PROCESSOR}" )
@@ -28,11 +22,21 @@ endif()
 include_directories("${PROJECT_BINARY_DIR}" "${PROJECT_SOURCE_DIR}/include/")
 
 # Add the executable
-add_executable(${PROJECT_NAME} mrz.cpp)
-if(WINDOWS)
-    target_link_libraries (${PROJECT_NAME} "DynamsoftLabelRecognitionx64")
+if (ENABLE_OPENCV)
+    find_package(OpenCV REQUIRED)
+    add_executable(${PROJECT_NAME} mrzcv.cpp)
+    if(WINDOWS)
+        target_link_libraries (${PROJECT_NAME} "DynamsoftLabelRecognitionx64" ${OpenCV_LIBS})
+    else()
+        target_link_libraries (${PROJECT_NAME} "DynamsoftLabelRecognition" ${OpenCV_LIBS})
+    endif()
 else()
-    target_link_libraries (${PROJECT_NAME} "DynamsoftLabelRecognition")
+    add_executable(${PROJECT_NAME} mrz.cpp)
+    if(WINDOWS)
+        target_link_libraries (${PROJECT_NAME} "DynamsoftLabelRecognitionx64")
+    else()
+        target_link_libraries (${PROJECT_NAME} "DynamsoftLabelRecognition")
+    endif()
 endif()
 
 # Copy DLLs

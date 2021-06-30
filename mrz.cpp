@@ -13,21 +13,30 @@
 
 #include "DynamsoftLabelRecognition.h"
 #include "DynamsoftCommon.h"
+
+#include <fstream>
+#include <streambuf>
+#include <iostream>
+#include <sstream>
+
 using namespace std;
 using namespace dynamsoft::dlr;
 
-vector<string> split(const string& str, const string& delim) {
+vector<string> split(const string &str, const string &delim)
+{
 	vector<string> res;
-	if ("" == str) return res;
+	if ("" == str)
+		return res;
 
-	char * strs = new char[str.length() + 1]; 
+	char *strs = new char[str.length() + 1];
 	strcpy(strs, str.c_str());
 
-	char * d = new char[delim.length() + 1];
+	char *d = new char[delim.length() + 1];
 	strcpy(d, delim.c_str());
 
 	char *p = strtok(strs, d);
-	while (p) {
+	while (p)
+	{
 		string s = p;
 		res.push_back(s);
 		p = strtok(NULL, d);
@@ -36,12 +45,12 @@ vector<string> split(const string& str, const string& delim) {
 	return res;
 }
 
-bool GetImagePath(char* pImagePath)
+bool GetImagePath(char *pImagePath)
 {
-	char pszBuffer[512] = { 0 };
+	char pszBuffer[512] = {0};
 	bool bExit = false;
 	size_t iLen = 0;
-	FILE* fp = NULL;
+	FILE *fp = NULL;
 	while (1)
 	{
 		printf("\r\n>> Step 1: Input your image file's full path:\r\n");
@@ -86,13 +95,13 @@ bool GetImagePath(char* pImagePath)
 	return bExit;
 }
 
-void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
+void OutputResult(CLabelRecognition &dlr, int errorcode, float time)
 {
 	if (errorcode != DLR_OK)
 		printf("\r\nFailed to recognize label : %s\r\n", dlr.GetErrorString(errorcode));
 	else
 	{
-		DLRResultArray* pDLRResults = NULL;
+		DLRResultArray *pDLRResults = NULL;
 		dlr.GetAllDLRResults(&pDLRResults);
 		if (pDLRResults != NULL)
 		{
@@ -100,8 +109,8 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 			printf("\r\nRecognized %d results\r\n", rCount);
 			for (int ri = 0; ri < rCount; ++ri)
 			{
-				printf("\r\Result %d :\r\n", ri);
-				DLRResult* result = pDLRResults->results[ri];
+				printf("\r\nResult %d :\r\n", ri);
+				DLRResult *result = pDLRResults->results[ri];
 				int lCount = result->lineResultsCount;
 				for (int li = 0; li < lCount; ++li)
 				{
@@ -113,7 +122,7 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 			bool bParse = false;
 			for (int ri = 0; ri < rCount; ++ri)
 			{
-				DLRResult* result = pDLRResults->results[ri];
+				DLRResult *result = pDLRResults->results[ri];
 				int lCount = result->lineResultsCount;
 				if (lCount < 2)
 				{
@@ -127,7 +136,7 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 				}
 				if (line1[0] != 'P')
 					continue;
-				string tmpString = line1.substr(5);			
+				string tmpString = line1.substr(5);
 				int pos = tmpString.find("<<");
 				if (pos > 0)
 				{
@@ -143,11 +152,11 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 					}
 					printf("\tSurname : %s\r\n", givenName.c_str());
 
-					string tmp2 = tmpString.substr(pos+2);
+					string tmp2 = tmpString.substr(pos + 2);
 					pos = tmp2.find_last_not_of('<');
 					if (pos > 0)
 					{
-						string surname = tmp2.substr(0, pos+1);
+						string surname = tmp2.substr(0, pos + 1);
 						vector<string> surnames = split(surname, "<");
 						surname = "";
 						for (int i = 0; i < surnames.size(); ++i)
@@ -184,9 +193,9 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 				}
 				printf("\tIssuing Country or Organization : %s\r\n", tmpString.c_str());
 
-				tmpString = line2.substr(13,6);
-				tmpString.insert(2,"-");
-				tmpString.insert(5,"-");
+				tmpString = line2.substr(13, 6);
+				tmpString.insert(2, "-");
+				tmpString.insert(5, "-");
 				printf("\tDate of Birth(YY-MM-DD) : %s\r\n", tmpString.c_str());
 
 				/*if(line2[20] == 'F' )
@@ -200,8 +209,6 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 				tmpString.insert(5, "-");
 				printf("\tPassport Expiration Date(YY-MM-DD) : %s\r\n", tmpString.c_str());
 			}
-
-
 		}
 		else
 		{
@@ -213,13 +220,24 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 	printf("\r\nTotal time spent: %.3f s\r\n", time);
 }
 
-int main()
+int main(int argc, const char *argv[])
 {
+	if (argc < 2)
+	{
+		printf("Usage: mrz license.txt template.json\n");
+		return 0;
+	}
+
+	// Read the license file.
+	std::ifstream licenseFile(argv[1]);
+	std::stringstream strStream;
+	strStream << licenseFile.rdbuf();
+	std::string licenseStr = strStream.str();
+
 	bool bExit = false;
-	char szErrorMsg[512];
-	char pszImageFile[512] = { 0 };
+	char pszImageFile[512] = {0};
 	bool autoRegion = false;
-	tagDLRPoint region[4] = { { 0,0 },{ 100,0 },{ 100,100 },{ 0,100 } };
+	tagDLRPoint region[4] = {{0, 0}, {100, 0}, {100, 100}, {0, 100}};
 #if defined(_WIN32) || defined(_WIN64)
 	unsigned _int64 ullTimeBegin = 0;
 	unsigned _int64 ullTimeEnd = 0;
@@ -227,17 +245,16 @@ int main()
 	struct timeval ullTimeBegin, ullTimeEnd;
 #endif
 
-
 	printf("*************************************************\r\n");
 	printf("Welcome to Dynamsoft Label Recognition Demo\r\n");
 	printf("*************************************************\r\n");
 	printf("Hints: Please input 'Q' or 'q' to quit the application.\r\n");
 
 	CLabelRecognition dlr;
-	dlr.InitLicense("LICENSE-KEY"); // Get 30-day FREE trial license https://www.dynamsoft.com/customer/license/trialLicense?product=dlr
+	dlr.InitLicense(licenseStr.c_str()); // Get 30-day FREE trial license https://www.dynamsoft.com/customer/license/trialLicense?product=dlr
 	int ret = dlr.AppendSettingsFromFile("wholeImgMRZTemplate.json");
 	while (1)
-	{	
+	{
 		bExit = GetImagePath(pszImageFile);
 		if (bExit)
 			break;
@@ -257,7 +274,6 @@ int main()
 #endif
 
 		OutputResult(dlr, errorCode, costTime);
-
 	}
 
 	return 0;
