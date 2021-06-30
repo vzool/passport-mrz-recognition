@@ -52,7 +52,7 @@ Get a [free trial license](https://www.dynamsoft.com/customer/license/trialLicen
     ```
     cmake --build . --config release
     cd release
-    mrz license.txt template.json
+    mrz license.txt
     ```
 
     
@@ -90,5 +90,5 @@ Get a [free trial license](https://www.dynamsoft.com/customer/license/trialLicen
 
     ```
     cmake --build . --config release
-    ./mrz license.txt template.json
+    ./mrz license.txt
     ```
