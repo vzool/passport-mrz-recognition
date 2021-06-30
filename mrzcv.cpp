@@ -33,18 +33,16 @@ using namespace dynamsoft::dlr;
 using namespace cv;
 
 Mat ori, current;
-Rect region(0,0,0,0);
-Point startPoint(0,0), endPoint(0,0);
 const char* windowName = "Passport MRZ Recognition";
-bool clicked = false;
 CLabelRecognition dlr;
-int maxHeight = 1200, maxWidth = 1200;
-double hScale = 1.0, wScale = 1.0;
+const int maxHeight = 1200, maxWidth = 1200;
 int thickness = 2;
-int skip = 50;
 Scalar lineColor = Scalar(255, 0, 0);
 Scalar textColor = Scalar(0, 0, 255);
 Mat before, after;
+
+double hScale = 1.0, wScale = 1.0, scale = 1.0;
+int skip = 40;
 
 void destroyWindow()
 {
@@ -154,7 +152,7 @@ bool GetImagePath(char* pImagePath)
 
 void drawText(Mat& img, const char* text, int x, int y) 
 {
-	putText(img, text, Point(x, y), FONT_HERSHEY_COMPLEX, 1, textColor, 1, LINE_AA);
+	putText(img, text, Point(x, y), FONT_HERSHEY_COMPLEX, scale, textColor, 1, LINE_AA);
 }
 
 void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
@@ -197,9 +195,9 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 					line( ori, Point(x2, y2), Point(x3, y3), lineColor, thickness);
 					line( ori, Point(x3, y3), Point(x4, y4), lineColor, thickness);
 					line( ori, Point(x4, y4), Point(x1, y1), lineColor, thickness);
-					drawText(ori, result->lineResults[li]->text, minX, minY - 10);
+					drawText(ori, result->lineResults[li]->text, minX, minY - scale * 10);
 
-					startY = minY - 600;
+					startY = minY - scale * 600;
 				}
 
 				printf("\nPassport Info \r\n");
@@ -339,8 +337,6 @@ int main(int argc, const char* argv[])
 	bool bExit = false;
 	char szErrorMsg[512];
 	char pszImageFile[512] = { 0 };
-	bool autoRegion = false;
-	tagDLRPoint region[4] = { { 0,0 },{ 100,0 },{ 100,100 },{ 0,100 } };
 #if defined(_WIN32) || defined(_WIN64)
 	unsigned _int64 ullTimeBegin = 0;
 	unsigned _int64 ullTimeEnd = 0;
@@ -359,6 +355,7 @@ int main(int argc, const char* argv[])
 	int ret = dlr.AppendSettingsFromFile(templateFile.c_str());
 	while (1)
 	{	
+		hScale = 1.0, wScale = 1.0, skip = 50, scale = 1.0;	
 		bExit = GetImagePath(pszImageFile);
 		if (bExit)
 			break;
@@ -370,19 +367,11 @@ int main(int argc, const char* argv[])
 
 		int imgHeight = ori.rows, imgWidth = ori.cols;
 	
-		if (imgHeight > maxHeight) 
-		{
-			hScale = imgHeight * 1.0 / maxHeight;
-			// thickness = 6;
-		}
-			
-
-		if (imgWidth > maxWidth)
-		{
-			wScale = imgWidth * 1.0 / maxWidth;
-			// thickness = 6;
-		}
-
+		hScale = imgHeight * 1.0 / maxHeight;
+		wScale = imgWidth * 1.0 / maxWidth;
+		scale = hScale > wScale ? hScale : wScale;
+		if (scale > 1) scale = 1;
+		skip *= scale;
 		float costTime = 0.0;
 		int errorCode = 0;
 
