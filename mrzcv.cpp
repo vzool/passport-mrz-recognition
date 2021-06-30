@@ -372,20 +372,14 @@ int main(int argc, const char* argv[])
 		scale = hScale > wScale ? hScale : wScale;
 		if (scale > 1) scale = 1;
 		skip *= scale;
-		float costTime = 0.0;
 		int errorCode = 0;
 
-#if defined(_WIN32) || defined(_WIN64)
-		ullTimeBegin = GetTickCount();
+		TickMeter tm;
+		tm.start();
 		errorCode = dlr.RecognizeByFile(pszImageFile, "locr");
-		ullTimeEnd = GetTickCount();
-		costTime = ((float)(ullTimeEnd - ullTimeBegin)) / 1000;
-#else
-		gettimeofday(&ullTimeBegin, NULL);
-		errorCode = dlr.RecognizeByFile(pszImageFile, "locr");
-		gettimeofday(&ullTimeEnd, NULL);
-		costTime = (float)((ullTimeEnd.tv_sec * 1000 * 1000 + ullTimeEnd.tv_usec) - (ullTimeBegin.tv_sec * 1000 * 1000 + ullTimeBegin.tv_usec)) / (1000 * 1000);
-#endif
+		tm.stop();
+		float costTime = tm.getTimeSec();
+
 		before = showImage("Passport", current);
 		OutputResult(dlr, errorCode, costTime);
 		Mat newMat;
