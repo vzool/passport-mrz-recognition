@@ -80,26 +80,6 @@ Mat showImage(string windowName, Mat &img)
 	return img;
 }
 
-vector<string> split(const string& str, const string& delim) {
-	vector<string> res;
-	if ("" == str) return res;
-
-	char * strs = new char[str.length() + 1]; 
-	strcpy(strs, str.c_str());
-
-	char * d = new char[delim.length() + 1];
-	strcpy(d, delim.c_str());
-
-	char *p = strtok(strs, d);
-	while (p) {
-		string s = p;
-		res.push_back(s);
-		p = strtok(NULL, d);
-	}
-
-	return res;
-}
-
 bool GetImagePath(char* pImagePath)
 {
 	char pszBuffer[512] = { 0 };
@@ -213,95 +193,128 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 				}
 				if (line1[0] != 'P')
 					continue;
-				string tmpString = line1.substr(5);			
-				int pos = tmpString.find("<<");
-				if (pos > 0)
-				{
-					string surname = tmpString.substr(0, pos);
-					vector<string> surnames = split(surname, "<");
-					surname = "";
-					for (int i = 0; i < surnames.size(); ++i)
-					{
-						if (i != surnames.size() - 1)
-							surname = surname + surnames[i] + " ";
-						else
-							surname = surname + surnames[i];
-					}
-					printf("\tSurname : %s\r\n", surname.c_str());
-					drawText(ori, ("Surname: " + surname).c_str(), startX, startY);
+				else {
+					// https://en.wikipedia.org/wiki/Machine-readable_passport
+					// Type
+					string tmp = "Type: ";
+					tmp.insert(tmp.length(), 1, line1[0]);
+					printf("%s\r\n", tmp.c_str());
+					drawText(ori, tmp.c_str(), startX, startY);
 					startY += skip;
 
-					string tmp2 = tmpString.substr(pos+2);
-					pos = tmp2.find_last_not_of('<');
-					if (pos > 0)
-					{
-						string givenName = tmp2.substr(0, pos+1);
-						vector<string> givenNames = split(givenName, "<");
-						givenName = "";
-						for (int i = 0; i < givenNames.size(); ++i)
-						{
-							if (i != givenNames.size() - 1)
-								givenName = givenName + givenNames[i] + " ";
-							else
-								givenName = givenName + givenNames[i];
-						}
-						printf("\tGiven Names : ");
+					// Issuing country
+					tmp = "Issuing country: "; line1.substr(2, 5);
+					tmp += line1.substr(2, 3);		
+					printf("%s\r\n", tmp.c_str());
+					drawText(ori, tmp.c_str(), startX, startY);
+					startY += skip;
 
-						printf("%s\r\n", givenName.c_str());
-						drawText(ori, ("Given name: " + givenName).c_str(), startX, startY);
+					// Surname
+					int index = 5;
+					tmp = "Surname: ";
+					for (; index < 44; index++)
+					{
+						if (line1[index] != '<')
+						{
+							tmp.insert(tmp.length(), 1, line1[index]);
+						}
+						else 
+						{
+							break;
+						}
+					}
+					printf("%s\r\n", tmp.c_str());
+					drawText(ori, tmp.c_str(), startX, startY);
+					startY += skip;
+
+					// Given names
+					tmp = "Given Names: ";
+					index += 2;
+					for (; index < 44; index++)
+					{
+						if (line1[index] != '<')
+						{
+							tmp.insert(tmp.length(), 1, line1[index]);
+						}
+						else 
+						{
+							tmp.insert(tmp.length(), 1, ' ');
+						}
+					}
+					printf("%s\r\n", tmp.c_str());
+					drawText(ori, tmp.c_str(), startX, startY);
+					startY += skip;
+
+					// Passport number
+					tmp = "Passport number: ";
+					index = 0;
+					for (; index < 9; index++)
+					{
+						if (line2[index] != '<')
+						{
+							tmp.insert(tmp.length(), 1, line2[index]);
+						}
+						else 
+						{
+							break;
+						}
+					}
+					printf("%s\r\n", tmp.c_str());
+					drawText(ori, tmp.c_str(), startX, startY);
+					startY += skip;
+ 
+					// Nationality
+					tmp = "Nationality: ";
+					tmp += line2.substr(10, 3);
+					printf("%s\r\n", tmp.c_str());
+					drawText(ori, tmp.c_str(), startX, startY);
+					startY += skip;
+
+					// Date of birth
+					tmp = line2.substr(13, 6);
+					tmp.insert(2, "/");
+					tmp.insert(5, "/");
+					tmp = "Date of birth (YYMMDD): " + tmp;
+					printf("%s\r\n", tmp.c_str());
+					drawText(ori, tmp.c_str(), startX, startY);
+					startY += skip;
+
+					// Sex
+					tmp = "Sex: ";
+					tmp.insert(tmp.length(), 1, line2[20]);
+					printf("%s\r\n", tmp.c_str());
+					drawText(ori, tmp.c_str(), startX, startY);
+					startY += skip;
+
+					// Expiration date of passport
+					tmp = line2.substr(21, 6);
+					tmp.insert(2, "/");
+					tmp.insert(5, "/");
+					tmp = "Expiration date of passport (YYMMDD): " + tmp;
+					printf("%s\r\n", tmp.c_str());
+					drawText(ori, tmp.c_str(), startX, startY);
+					startY += skip;
+
+					// Personal number
+					if (line2[28] != '<')
+					{
+						tmp = "Personal number: ";
+						for (index = 28; index < 42; index++)
+						{
+							if (line2[index] != '<')
+							{
+								tmp.insert(tmp.length(), 1, line2[index]);
+							}
+							else 
+							{
+								break;
+							}
+						}
+						printf("%s\r\n", tmp.c_str());
+						drawText(ori, tmp.c_str(), startX, startY);
 						startY += skip;
 					}
 				}
-				string na = line1.substr(2, 3);
-				if (na.back() == '<')
-				{
-					na = na.substr(0, 2);
-				}
-				printf("\tNationality : %s\r\n", na.c_str());
-				drawText(ori, ("Nationality: " + na).c_str(), startX, startY);
-				startY += skip;
-
-				tmpString = line2.substr(0, 9);
-				pos = tmpString.find_first_of('<');
-				if (pos > 0)
-				{
-					tmpString = tmpString.substr(0, pos);
-				}
-				printf("\tPassport Number : %s\r\n", tmpString.c_str());
-				drawText(ori, ("Passport Number: " + tmpString).c_str(), startX, startY);
-				startY += skip;
-
-				tmpString = line2.substr(10, 3);
-				if (tmpString.back() == '<')
-				{
-					tmpString = tmpString.substr(0, 2);
-				}
-				printf("\tIssuing Country or Organization : %s\r\n", tmpString.c_str());
-				drawText(ori, ("Issuing Country or Organization:" + tmpString).c_str(), startX, startY);
-				startY += skip;
-
-				tmpString = line2.substr(13,6);
-				tmpString.insert(2,"-");
-				tmpString.insert(5,"-");
-				printf("\tDate of Birth(YY-MM-DD) : %s\r\n", tmpString.c_str());
-				drawText(ori, ("Date of Birth(YY-MM-DD): " + tmpString).c_str(), startX, startY);
-				startY += skip;
-				/*if(line2[20] == 'F' )
-					tmpString = "Female";
-				if (line2[20] == 'M')
-					tmpString = "Male";*/
-				printf("\tSex/Gender : %c\r\n", line2[20]);
-				string gender = "Sex/Gender :";
-				gender.insert(gender.length(), 1, line2[20]);
-				drawText(ori, gender.c_str(), startX, startY);
-				startY += skip;
-
-				tmpString = line2.substr(21, 6);
-				tmpString.insert(2, "-");
-				tmpString.insert(5, "-");
-				printf("\tPassport Expiration Date(YY-MM-DD) : %s\r\n", tmpString.c_str());
-				drawText(ori, ("Passport Expiration Date(YY-MM-DD):" + tmpString).c_str(), startX, startY);
-				startY += skip;
 			}
 		}
 		else
