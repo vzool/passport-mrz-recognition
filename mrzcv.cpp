@@ -1,7 +1,5 @@
 #include <stdio.h>
 #include <string>
-#include <vector>
-
 
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
@@ -348,15 +346,7 @@ int main(int argc, const char* argv[])
 	}
 
 	bool bExit = false;
-	char szErrorMsg[512];
 	char pszImageFile[512] = { 0 };
-#if defined(_WIN32) || defined(_WIN64)
-	unsigned _int64 ullTimeBegin = 0;
-	unsigned _int64 ullTimeEnd = 0;
-#else
-	struct timeval ullTimeBegin, ullTimeEnd;
-#endif
-
 
 	printf("*************************************************\r\n");
 	printf("Welcome to Dynamsoft Label Recognition Demo\r\n");
