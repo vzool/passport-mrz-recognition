@@ -92,3 +92,7 @@ Get a [free trial license](https://www.dynamsoft.com/customer/license/trialLicen
     cmake --build . --config release
     ./mrz license.txt
     ```
+    
+    
+ ## Blog
+ [Passport MRZ Recognition with Dynamsoft C++ OCR SDK](https://www.dynamsoft.com/codepool/passport-mrz-recognition-cpp-windows-linux.html)
