@@ -201,7 +201,7 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 					startY += skip;
 
 					// Issuing country
-					tmp = "Issuing country: "; line1.substr(2, 5);
+					tmp = "Issuing country: ";
 					tmp += line1.substr(2, 3);		
 					printf("%s\r\n", tmp.c_str());
 					drawText(ori, tmp.c_str(), startX, startY);
