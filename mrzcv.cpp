@@ -18,8 +18,8 @@
 #include <sys/time.h>
 #endif
 
-#include "DynamsoftLabelRecognition.h"
-#include "DynamsoftCommon.h"
+#include "DynamsoftLabelRecognizer.h"
+#include "DynamsoftCore.h"
 
 #include <fstream>
 #include <streambuf>
@@ -32,7 +32,7 @@ using namespace cv;
 
 Mat ori, current;
 const char* windowName = "Passport MRZ Recognition";
-CLabelRecognition dlr;
+CLabelRecognizer dlr;
 const int maxHeight = 1200, maxWidth = 1200;
 int thickness = 2;
 Scalar lineColor = Scalar(255, 0, 0);
@@ -56,8 +56,8 @@ Mat showImage(string windowName, Mat &img)
 	{
 		Mat newMat;
 		resize(img, newMat, Size(int(imgWidth / hScale), int(imgHeight / hScale)));
-		imshow(windowName, newMat);
-		imwrite(windowName + ".jpg", newMat);
+		// imshow(windowName, newMat);
+		// imwrite(windowName + ".jpg", newMat);
 
 		return newMat;
 	}
@@ -65,14 +65,14 @@ Mat showImage(string windowName, Mat &img)
 	{
 		Mat newMat;
 		resize(img, newMat, Size(int(imgWidth / wScale), int(imgHeight / wScale)));
-		imshow(windowName, newMat);
-		imwrite(windowName + ".jpg", newMat);
+		// imshow(windowName, newMat);
+		// imwrite(windowName + ".jpg", newMat);
 		return newMat;
 	}
 	else 
 	{
-		imshow(windowName, img);
-		imwrite(windowName + ".jpg", img);
+		// imshow(windowName, img);
+		// imwrite(windowName + ".jpg", img);
 	}
 
 	return img;
@@ -133,14 +133,14 @@ void drawText(Mat& img, const char* text, int x, int y)
 	putText(img, text, Point(x, y), FONT_HERSHEY_COMPLEX, scale, textColor, 1, LINE_AA);
 }
 
-void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
+void OutputResult(CLabelRecognizer& dlr, int errorcode, float time)
 {
-	if (errorcode != DLR_OK)
+	if (errorcode != DM_OK)
 		printf("\r\nFailed to recognize label : %s\r\n", dlr.GetErrorString(errorcode));
 	else
 	{
-		DLRResultArray* pDLRResults = NULL;
-		dlr.GetAllDLRResults(&pDLRResults);
+		DLR_ResultArray* pDLRResults = NULL;
+		dlr.GetAllResults(&pDLRResults);
 		if (pDLRResults != NULL)
 		{
 			int rCount = pDLRResults->resultsCount;
@@ -149,12 +149,12 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 			{
 				printf("\r\nResult %d :\r\n", ri);
 				int startX = 50, startY = 50;
-				DLRResult* result = pDLRResults->results[ri];
+				DLR_Result* result = pDLRResults->results[ri];
 				int lCount = result->lineResultsCount;
 				for (int li = 0; li < lCount; ++li)
 				{
 					printf("Line result %d: %s\r\n", li, result->lineResults[li]->text);
-					DLRPoint *points = result->lineResults[li]->location.points;
+					DM_Point *points = result->lineResults[li]->location.points;
 					printf("x1: %d, y1: %d, x2: %d, y2: %d, x3: %d, y3: %d, x4: %d, y4: %d\r\n", points[0].x, 
 					points[0].y, points[1].x, points[1].y, points[2].x, points[2].y, points[3].x, points[3].y);
 					int x1 = points[0].x, y1 = points[0].y;
@@ -319,7 +319,7 @@ void OutputResult(CLabelRecognition& dlr, int errorcode, float time)
 		{
 			printf("\r\nNo data detected.\r\n");
 		}
-		dlr.FreeDLRResults(&pDLRResults);
+		dlr.FreeResults(&pDLRResults);
 	}
 
 	printf("\r\nTotal time spent: %.3f s\r\n", time);
@@ -352,10 +352,10 @@ int main(int argc, const char* argv[])
 	printf("Welcome to Dynamsoft Label Recognition Demo\r\n");
 	printf("*************************************************\r\n");
 	printf("Hints: Please input 'Q' or 'q' to quit the application.\r\n");
-
-	CLabelRecognition dlr;
+	CLabelRecognizer dlr;
 	dlr.InitLicense(licenseStr.c_str()); // Get 30-day FREE trial license https://www.dynamsoft.com/customer/license/trialLicense?product=dlr
 	int ret = dlr.AppendSettingsFromFile(templateFile.c_str());
+	std::cout << "AppendSettingsFromFile: " << ret << std::endl;
 	while (1)
 	{	
 		hScale = 1.0, wScale = 1.0, skip = 50, scale = 1.0;	
@@ -366,7 +366,6 @@ int main(int argc, const char* argv[])
 		// Read an image
 		ori = imread(pszImageFile);
 		current = ori.clone();
-		namedWindow(windowName);
 
 		int imgHeight = ori.rows, imgWidth = ori.cols;
 	
@@ -382,6 +381,7 @@ int main(int argc, const char* argv[])
 		errorCode = dlr.RecognizeByFile(pszImageFile, "locr");
 		tm.stop();
 		float costTime = tm.getTimeSec();
+		std::cout << "Cost time: " << costTime << " s" << std::endl;
 
 		before = showImage("Passport", current);
 		OutputResult(dlr, errorCode, costTime);

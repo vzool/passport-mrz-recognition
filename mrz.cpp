@@ -11,8 +11,8 @@
 #include <sys/time.h>
 #endif
 
-#include "DynamsoftLabelRecognition.h"
-#include "DynamsoftCommon.h"
+#include "DynamsoftLabelRecognizer.h"
+#include "DynamsoftCore.h"
 
 #include <fstream>
 #include <streambuf>
@@ -95,14 +95,14 @@ bool GetImagePath(char *pImagePath)
 	return bExit;
 }
 
-void OutputResult(CLabelRecognition &dlr, int errorcode, float time)
+void OutputResult(CLabelRecognizer& dlr, int errorcode, float time)
 {
-	if (errorcode != DLR_OK)
+	if (errorcode != DM_OK)
 		printf("\r\nFailed to recognize label : %s\r\n", dlr.GetErrorString(errorcode));
 	else
 	{
-		DLRResultArray *pDLRResults = NULL;
-		dlr.GetAllDLRResults(&pDLRResults);
+		DLR_ResultArray* pDLRResults = NULL;
+		dlr.GetAllResults(&pDLRResults);
 		if (pDLRResults != NULL)
 		{
 			int rCount = pDLRResults->resultsCount;
@@ -110,7 +110,7 @@ void OutputResult(CLabelRecognition &dlr, int errorcode, float time)
 			for (int ri = 0; ri < rCount; ++ri)
 			{
 				printf("\r\nResult %d :\r\n", ri);
-				DLRResult *result = pDLRResults->results[ri];
+				DLR_Result* result = pDLRResults->results[ri];
 				int lCount = result->lineResultsCount;
 				for (int li = 0; li < lCount; ++li)
 				{
@@ -122,7 +122,7 @@ void OutputResult(CLabelRecognition &dlr, int errorcode, float time)
 			bool bParse = false;
 			for (int ri = 0; ri < rCount; ++ri)
 			{
-				DLRResult *result = pDLRResults->results[ri];
+				DLR_Result *result = pDLRResults->results[ri];
 				int lCount = result->lineResultsCount;
 				if (lCount < 2)
 				{
@@ -214,7 +214,7 @@ void OutputResult(CLabelRecognition &dlr, int errorcode, float time)
 		{
 			printf("\r\nNo data detected.\r\n");
 		}
-		dlr.FreeDLRResults(&pDLRResults);
+		dlr.FreeResults(&pDLRResults);
 	}
 
 	printf("\r\nTotal time spent: %.3f s\r\n", time);
@@ -237,7 +237,6 @@ int main(int argc, const char *argv[])
 	bool bExit = false;
 	char pszImageFile[512] = {0};
 	bool autoRegion = false;
-	tagDLRPoint region[4] = {{0, 0}, {100, 0}, {100, 100}, {0, 100}};
 #if defined(_WIN32) || defined(_WIN64)
 	unsigned _int64 ullTimeBegin = 0;
 	unsigned _int64 ullTimeEnd = 0;
@@ -250,7 +249,7 @@ int main(int argc, const char *argv[])
 	printf("*************************************************\r\n");
 	printf("Hints: Please input 'Q' or 'q' to quit the application.\r\n");
 
-	CLabelRecognition dlr;
+	CLabelRecognizer dlr;
 	dlr.InitLicense(licenseStr.c_str()); // Get 30-day FREE trial license https://www.dynamsoft.com/customer/license/trialLicense?product=dlr
 	int ret = dlr.AppendSettingsFromFile("wholeImgMRZTemplate.json");
 	while (1)
