@@ -51,8 +51,8 @@
    "ReferenceRegionArray" : [
       {
          "Localization" : {
-            "FirstPoint" : [ 0, 50 ],
-            "SecondPoint" : [ 100, 50 ],
+            "FirstPoint" : [ 0, 0 ],
+            "SecondPoint" : [ 100, 0 ],
             "ThirdPoint" : [ 100, 100 ],
             "FourthPoint" : [ 0, 100 ],
             "MeasuredByPercentage" : 1,
