@@ -118,7 +118,6 @@ void OutputResult(CLabelRecognizer& dlr, int errorcode, float time)
 				}
 			}
 
-			printf("\nPassport Info \r\n");
 			bool bParse = false;
 			for (int ri = 0; ri < rCount; ++ri)
 			{
@@ -128,6 +127,7 @@ void OutputResult(CLabelRecognizer& dlr, int errorcode, float time)
 				{
 					continue;
 				}
+				printf("\nPassport Info \r\n");
 				string line1 = result->lineResults[0]->text;
 				string line2 = result->lineResults[1]->text;
 				if (line1.length() != 44 || line2.length() != 44)
@@ -224,7 +224,7 @@ int main(int argc, const char *argv[])
 {
 	if (argc < 2)
 	{
-		printf("Usage: mrz license.txt template.json\n");
+		printf("Usage: mrz license.txt dictionary.txt\n");
 		return 0;
 	}
 
@@ -251,7 +251,20 @@ int main(int argc, const char *argv[])
 
 	CLabelRecognizer dlr;
 	dlr.InitLicense(licenseStr.c_str()); // Get 30-day FREE trial license https://www.dynamsoft.com/customer/license/trialLicense?product=dlr
-	int ret = dlr.AppendSettingsFromFile("wholeImgMRZTemplate.json");
+
+	DLR_RuntimeSettings *pSettings = new DLR_RuntimeSettings();
+	dlr.GetRuntimeSettings(pSettings);
+
+	if (argc == 3)
+	{
+		memcpy(pSettings->dictionaryPath, argv[2], 256);
+	}
+
+	char errorMessage[512];
+	dlr.UpdateRuntimeSettings(pSettings, errorMessage, 512);
+	cout << errorMessage << endl;
+	delete pSettings;
+
 	while (1)
 	{
 		bExit = GetImagePath(pszImageFile);
@@ -262,7 +275,7 @@ int main(int argc, const char *argv[])
 
 #if defined(_WIN32) || defined(_WIN64)
 		ullTimeBegin = GetTickCount();
-		errorCode = dlr.RecognizeByFile(pszImageFile, "locr");
+		errorCode = dlr.RecognizeByFile(pszImageFile, "");
 		ullTimeEnd = GetTickCount();
 		costTime = ((float)(ullTimeEnd - ullTimeBegin)) / 1000;
 #else

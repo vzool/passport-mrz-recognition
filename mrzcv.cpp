@@ -178,7 +178,6 @@ void OutputResult(CLabelRecognizer& dlr, int errorcode, float time)
 					startY = minY - scale * 600;
 				}
 
-				printf("\nPassport Info \r\n");
 				if (lCount < 2)
 				{
 					continue;
@@ -192,6 +191,7 @@ void OutputResult(CLabelRecognizer& dlr, int errorcode, float time)
 				if (line1[0] != 'P')
 					continue;
 				else {
+					printf("\nPassport Info \r\n");
 					// https://en.wikipedia.org/wiki/Machine-readable_passport
 					// Type
 					string tmp = "Type: ";
@@ -329,7 +329,7 @@ void OutputResult(CLabelRecognizer& dlr, int errorcode, float time)
 int main(int argc, const char* argv[])
 {
 	if (argc < 2) {
-		printf("Usage: mrz license.txt template.json\n");
+		printf("Usage: mrz license.txt dictionary.txt\n");
         return 0;
 	}
 
@@ -339,12 +339,6 @@ int main(int argc, const char* argv[])
     strStream << licenseFile.rdbuf(); 
     std::string licenseStr = strStream.str(); 
 
-	// Template file
-	string templateFile = "wholeImgMRZTemplate.json";
-	if (argc == 3) {
-		templateFile = argv[2];
-	}
-
 	bool bExit = false;
 	char pszImageFile[512] = { 0 };
 
@@ -352,10 +346,22 @@ int main(int argc, const char* argv[])
 	printf("Welcome to Dynamsoft Label Recognition Demo\r\n");
 	printf("*************************************************\r\n");
 	printf("Hints: Please input 'Q' or 'q' to quit the application.\r\n");
-	CLabelRecognizer dlr;
+
 	dlr.InitLicense(licenseStr.c_str()); // Get 30-day FREE trial license https://www.dynamsoft.com/customer/license/trialLicense?product=dlr
-	int ret = dlr.AppendSettingsFromFile(templateFile.c_str());
-	std::cout << "AppendSettingsFromFile: " << ret << std::endl;
+
+	DLR_RuntimeSettings *pSettings = new DLR_RuntimeSettings();
+	dlr.GetRuntimeSettings(pSettings);
+
+	if (argc == 3)
+	{
+		memcpy(pSettings->dictionaryPath, argv[2], 256);		
+	}
+
+	char errorMessage[512];
+	dlr.UpdateRuntimeSettings(pSettings, errorMessage, 512);
+	cout << errorMessage << endl;
+	delete pSettings;
+
 	while (1)
 	{	
 		hScale = 1.0, wScale = 1.0, skip = 50, scale = 1.0;	
@@ -378,7 +384,7 @@ int main(int argc, const char* argv[])
 
 		TickMeter tm;
 		tm.start();
-		errorCode = dlr.RecognizeByFile(pszImageFile, "locr");
+		errorCode = dlr.RecognizeByFile(pszImageFile, "");
 		tm.stop();
 		float costTime = tm.getTimeSec();
 		std::cout << "Cost time: " << costTime << " s" << std::endl;
@@ -386,8 +392,8 @@ int main(int argc, const char* argv[])
 		before = showImage("Passport", current);
 		OutputResult(dlr, errorCode, costTime);
 		Mat newMat;
-		hconcat(before, after, newMat);
-		imshow("Comparison", newMat);
+		// hconcat(before, after, newMat);
+		imshow("Label Recognizer", after);
 		destroyWindow();
 	}
 
